@@ -1,6 +1,6 @@
 # gdp
 
-gdp is generate distributed representation package for python.
+gdp is generating distributed representation code sets written by pytorch.
 
 ---
 ## test
