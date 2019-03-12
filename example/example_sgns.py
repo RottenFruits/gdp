@@ -5,7 +5,7 @@ import corpus as cp
 import distributed_representation as dr
 
 corpus = cp.Corpus(data = '../data/ptb/ptb.train.txt', mode = "l", 
-                max_vocabulary_size = 5000, max_line = 100, 
+                max_vocabulary_size = 5000, max_line = 10, 
                minimum_freq = 5)
 
 window_size = 1
