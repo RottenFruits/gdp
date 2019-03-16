@@ -29,3 +29,10 @@ You can run simply version which using small data of skipgram with negative samp
 cd gdp
 python example/example_sgns.py
 ```
+
+## Distributed representations
+
+gdp inclues:
+- skipgram
+- skipgram with negative sampling
+
