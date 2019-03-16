@@ -4,7 +4,13 @@ sys.path.append('..')
 import corpus as cp
 import distributed_representation as dr
 
-corpus = cp.Corpus(data = '../data/ptb/ptb.train.txt', mode = "l", 
+import utility
+
+#data download
+dl = utility.data_loader()
+dl.dataload()
+
+corpus = cp.Corpus(data = 'data/simple-examples/data/ptb.train.txt', mode = "l", 
                 max_vocabulary_size = 5000, max_line = 10, 
                minimum_freq = 5)
 
