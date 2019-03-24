@@ -44,7 +44,7 @@ class Corpus:
         count = [['UNK', -1]]
         count = count[(count[:, 1].astype(int) >= minimum_freq) | (count[:, 1].astype(int) == -1)]
         count = count[count[:, 1].astype(int) >= minimum_freq]
-        rho = int(np.quantile(count[1:, 1].astype(int), q = 0.90))
+        rho = int(np.percentile(count[1:, 1].astype(int), q = 0.90))
         count = count[[self.subsampling(c, rho)[0] == 0 for _, c in count]]
 
         dictionary = dict()
@@ -70,7 +70,7 @@ class Corpus:
         count.extend(collections.Counter(words).most_common(vocabulary_size - 1))
         count = np.array(count)
         count = count[(count[:, 1].astype(int) >= minimum_freq) | (count[:, 1].astype(int) == -1)]
-        rho = int(np.quantile(count[1:, 1].astype(int), q = 0.90))
+        rho = int(np.percentile(count[1:, 1].astype(int), q = 0.90))
         count = count[[self.subsampling(c, rho)[0] == 0 for _, c in count]]
 
         #dictionary
