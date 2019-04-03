@@ -38,8 +38,7 @@ class DistributedRepresentation:
                     else:
                         loss = self.model(batches[i], self.corpus)
                     loss.backward()
-                    loss_val += loss.data
-                    print(loss.data.item())
+                    loss_val += loss.data.item()
                     optimizer.step()
 
             self.model.batch_end = 0
