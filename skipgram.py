@@ -21,6 +21,11 @@ class Skipgram(torch.nn.Module):
         else:
             self.u_embeddings = torch.nn.Embedding(self.vocab_size+1, self.embedding_dim,  sparse = True)
             self.v_embeddings = torch.nn.Embedding(self.vocab_size+1, self.embedding_dim, sparse = True)
+
+        if torch.cuda.is_available():
+            self.u_embeddings = self.u_embeddings.cuda()
+            self.v_embeddings = self.v_embeddings.cuda()
+
         #embedding init
         initrange = 0.5 / self.embedding_dim
         self.u_embeddings.weight.data.uniform_(-initrange, initrange)
@@ -93,16 +98,21 @@ class Skipgram(torch.nn.Module):
 
     def forward(self, batch, corpus = None):
         if self.sgns == 0:
-            y_true = Variable(torch.from_numpy(np.array([batch[1]])).long())
+            y_true = Variable(torch.from_numpy(np.array(batch[:, 1]))).long()
+            x1 = torch.LongTensor(batch[:, 0])
+            x2 = torch.LongTensor(range(self.embedding_dim))
 
-            x1 = torch.LongTensor([[batch[0]]])
-            x2 = torch.LongTensor([range(self.embedding_dim)])
+            if torch.cuda.is_available():
+                y_true = y_true.cuda()
+                x1 = x1.cuda()
+                x2 = x2.cuda()
+                
             u_emb = self.u_embeddings(x1)
             v_emb = self.v_embeddings(x2)
-            z = torch.matmul(u_emb, v_emb).view(-1) #view reshape
+            z = torch.matmul(u_emb, v_emb)
 
             log_softmax = F.log_softmax(z, dim = 0)
-            loss = F.nll_loss(log_softmax.view(1,-1), y_true)
+            loss = F.nll_loss(log_softmax, y_true)
         else:        
             target = torch.LongTensor([[batch[0]]])
             context = torch.LongTensor([[batch[1]]])

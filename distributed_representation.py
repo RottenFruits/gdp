@@ -30,16 +30,15 @@ class DistributedRepresentation:
             loss_val = 0
 
             while self.model.batch_end  == 0:
-                batches = self.model .generate_batch(self.corpus, self.window_size, self.batch_size)
-                for i in tqdm(range(len(batches)), desc = 'batches', leave = False):
-                    optimizer.zero_grad()
-                    if self.sgns == 0:
-                        loss = self.model(batches[i])
-                    else:
-                        loss = self.model(batches[i], self.corpus)
-                    loss.backward()
-                    loss_val += loss.data.item()
-                    optimizer.step()
+                batches = self.model.generate_batch(self.corpus, self.window_size, self.batch_size)
+                optimizer.zero_grad()
+                if self.sgns == 0:
+                    loss = self.model(batches)
+                else:
+                    loss = self.model(batches, self.corpus)
+                loss.backward()
+                loss_val += loss.data.item()
+                optimizer.step()
 
             self.model.batch_end = 0
                         
@@ -49,9 +48,12 @@ class DistributedRepresentation:
                 
     def get_vector(self, word):
         word_idx = self.corpus.dictionary[word]
-        word_idx = torch.LongTensor([[ word_idx]])
-        
-        vector = self.model.u_embeddings(word_idx).view(-1).detach().numpy()
+        word_idx = torch.LongTensor([[word_idx]])
+        if torch.cuda.is_available():
+            word_idx = word_idx.cuda()
+            vector = self.model.u_embeddings(word_idx).view(-1).detach().cpu().numpy()
+        else:
+            vector = self.model.u_embeddings(word_idx).view(-1).detach().numpy()
         return vector
 
     def similarity_pair(self, word1, word2):
