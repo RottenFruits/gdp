@@ -41,6 +41,9 @@ class DistributedRepresentation:
                 optimizer.step()
 
             self.model.batch_end = 0
+            #shuffle
+            rind = np.random.permutation(len(self.corpus.data))
+            self.corpus.data = np.array(self.corpus.data)[rind]
                         
             if self.trace == True:
                 if epo % 10 == 0:
