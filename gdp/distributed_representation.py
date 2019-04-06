@@ -3,7 +3,7 @@ import torch.optim as optim
 import collections
 import numpy as np
 from tqdm import tqdm
-from word2vec  import word2vec
+#from word2vec  import word2vec
 
 class DistributedRepresentation:
     def __init__(self, corpus, embedding_dim, window_size, batch_size, model_type = "skip-gram", 
