@@ -63,7 +63,7 @@ dr_sgns = dr.DistributedRepresentation(corpus, embedding_dims, window_size, batc
 dr_sgns.train(num_epochs = 101, learning_rate = 0.05)
 ```
 
-### Etc
+### etc
 If you want to use cbow architecture, you should replace `model_type` "skip-gram" to "cbow".
 
 And more example code is in example directory, please check it too.
@@ -75,4 +75,8 @@ gdp inclues:
 - skipgram with negative sampling
 - cbow
 - cbow with negative sampling
+
+
+## Reference
+- Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg S Corrado, and Jeff Dean. 2013. Distributed Representations of Words and Phrases and their Compositionality.
 
