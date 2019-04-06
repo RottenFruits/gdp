@@ -1,6 +1,8 @@
 # gdp
 
-gdp is generating distributed representation code sets written by pytorch.
+gdp is generating distributed representation code sets written by pytorch. 
+
+This code sets is including skip gram and cbow.
 
 ---
 ## Installation
