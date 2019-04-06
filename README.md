@@ -21,7 +21,10 @@ pip install git+https://github.com/RottenFruits/gdp
 ```
 
 ## Example
+### skip gram
+
 This is example that run simple skip gram.
+
 
 ```python
 from gdp import distributed_representation as dr
@@ -49,6 +52,7 @@ dr_sg = dr.DistributedRepresentation(corpus, embedding_dims, window_size, batch_
 dr_sg.train(num_epochs = 101, learning_rate = 0.05)
 ```
 
+### skip gram with negative sampling
 If you want to use negative sampling is this.
 
 ```python
@@ -57,6 +61,7 @@ dr_sgns = dr.DistributedRepresentation(corpus, embedding_dims, window_size, batc
 dr_sgns.train(num_epochs = 101, learning_rate = 0.05)
 ```
 
+### Etc
 If you want to use cbow architecture, you should replace `model_type` "skip-gram" to "cbow".
 
 And more example code is in example directory, please check it too.
