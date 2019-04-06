@@ -35,4 +35,6 @@ python example/example_sgns.py
 gdp inclues:
 - skipgram
 - skipgram with negative sampling
+- cbow
+- cbow with negative sampling
 
