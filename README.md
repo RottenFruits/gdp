@@ -17,7 +17,7 @@ gdp requires:
 You can install gdp running the following commands.
 
 ```
-git clone https://github.com/RottenFruits/gdp.git
+pip install git+https://github.com/RottenFruits/gdp
 ```
 
 ## Example
