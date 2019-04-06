@@ -4,18 +4,19 @@ import torch.nn.functional as F
 import collections
 import numpy as np
 
-class Skipgram(torch.nn.Module):
-    def __init__(self, vocab_size, embedding_dim, negative_samples, sgns):
-        super(Skipgram, self).__init__()
-        self.sgns = sgns
+class word2vec(torch.nn.Module):
+    def __init__(self, vocab_size, embedding_dim, negative_samples, ns, model_type):
+        super(word2vec, self).__init__()
+        self.ns = ns
         self.negative_samples = negative_samples
         self.row_idx = 0
         self.col_idx = 0
         self.batch_end = 0
         self.embedding_dim = embedding_dim
         self.vocab_size = vocab_size
+        self.model_type = model_type
         
-        if sgns == 0:
+        if ns == 0:
             self.u_embeddings = torch.nn.Embedding(self.vocab_size+1, self.embedding_dim,  sparse = True)
             self.v_embeddings = torch.nn.Embedding(self.embedding_dim, self.vocab_size+1, sparse = True) 
         else:
@@ -85,7 +86,12 @@ class Skipgram(torch.nn.Module):
                 self.row_idx = row_idx
                 self.col_idx = col_idx
         
-        return  np.vstack((np.array(target), np.array(context))).T
+        if self.model_type == "skip-gram":
+            batches = np.vstack((np.array(target), np.array(context))).T
+        else:
+            batches = np.vstack((np.array(context), np.array(target))).T
+        
+        return batches
 
     def negative_sampling(self, corpus):
         sampled = np.random.choice(corpus.negaive_sample_table_w, p = corpus.negaive_sample_table_p, size = self.negative_samples)
@@ -93,7 +99,7 @@ class Skipgram(torch.nn.Module):
         return negative_samples    
 
     def forward(self, batch, corpus = None):
-        if self.sgns == 0:
+        if self.ns == 0:
             y_true = Variable(torch.from_numpy(np.array([batch[1]])).long())
             x1 = torch.LongTensor([batch[0]])
             x2 = torch.LongTensor(range(self.embedding_dim))
