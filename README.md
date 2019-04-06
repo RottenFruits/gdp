@@ -23,7 +23,7 @@ pip install git+https://github.com/RottenFruits/gdp
 ## Example
 This is example that run simple skip gram.
 
-```
+```python
 from gdp import distributed_representation as dr
 from gdp import corpus as cp
 
@@ -44,17 +44,14 @@ window_size = 1
 embedding_dims = 30
 batch_size = 128
 
-dr_sgns = dr.DistributedRepresentation(corpus, embedding_dims, window_size, batch_size, 
-                                       model_type = "skip-gram",  ns = 0, trace = True)
-dr_sgns.train(num_epochs = 101, learning_rate = 0.05)
+dr_sg = dr.DistributedRepresentation(corpus, embedding_dims, window_size, batch_size, 
+                                       model_type = "skip-gram", ns = 0, trace = True)
+dr_sg.train(num_epochs = 101, learning_rate = 0.05)
 ```
 
 If you want to use negative sampling is this.
-```
-window_size = 1
-embedding_dims = 30
-batch_size = 128
 
+```python
 dr_sgns = dr.DistributedRepresentation(corpus, embedding_dims, window_size, batch_size, 
                                        model_type = "skip-gram", ns = 1, negative_samples = 5, trace = True)
 dr_sgns.train(num_epochs = 101, learning_rate = 0.05)
@@ -62,6 +59,7 @@ dr_sgns.train(num_epochs = 101, learning_rate = 0.05)
 
 If you want to use cbow architecture, you should replace `model_type` "skip-gram" to "cbow".
 
+And more example code is in example directory, please check it too.
 
 ## Distributed representations
 
