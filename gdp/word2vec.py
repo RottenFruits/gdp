@@ -38,40 +38,25 @@ class word2vec(torch.nn.Module):
         while i < batch_size:
             data = corpus.data[row_idx]
             target_ = data[col_idx]
-            sentence_length = len(data) 
+            sentence_length = len(data)
 
-            if col_idx == 0: #first word
-                start_idx = col_idx + 1
-                start_idx = 0 if  start_idx < 0 else start_idx
-                end_idx = col_idx + 1 + window_size
-                end_idx = end_idx if  end_idx < (sentence_length )  else sentence_length
-                for t in range(start_idx, end_idx):
-                    if t > sentence_length - 1:break
-                    context.append(data[t])
-                    target.append(target_)
-                    i += 1
-            elif col_idx == len(data): #last word
-                start_idx = col_idx - window_size
-                start_idx = 0 if  start_idx < 0 else start_idx
-                end_idx = col_idx + 1
-                end_idx = end_idx if  end_idx < (sentence_length)  else sentence_length 
-                for t in range(start_idx, end_idx):
-                    if t > sentence_length - 1:break
-                    context.append(data[t])
-                    target.append(target_)
-                    i += 1
-            else:#mid word
-                start_idx = col_idx - window_size
-                start_idx = 0 if  start_idx < 0 else start_idx
-                end_idx = col_idx + 1 + window_size
-                end_idx = end_idx if  end_idx < (sentence_length )  else sentence_length 
+            start_idx = col_idx - window_size
+            start_idx = 0 if  start_idx < 0 else start_idx
+            end_idx = col_idx + 1 + window_size
+            end_idx = end_idx if  end_idx < (sentence_length )  else sentence_length
+
+            if self.model_type == "skip-gram":
                 for t in range(start_idx, end_idx):
                     if t > sentence_length - 1:break
                     if t == col_idx:continue
                     context.append(data[t])
                     target.append(target_)
                     i += 1
-
+            else:
+                context.append([data[x] for i, x in enumerate(range(start_idx, end_idx)) if x != col_idx])
+                target.append(target_)
+                i += 1
+                
             col_idx = (col_idx + 1)
             if col_idx == len(data):
                 col_idx  = 0
@@ -89,8 +74,10 @@ class word2vec(torch.nn.Module):
         if self.model_type == "skip-gram":
             batches = np.vstack((np.array(target), np.array(context))).T
         else:
-            batches = np.vstack((np.array(context), np.array(target))).T
-        
+            batches = []
+            for c, t in zip(context, target):
+                batches.append([c, t])
+            batches = np.array(batches)
         return batches
 
     def negative_sampling(self, corpus):
