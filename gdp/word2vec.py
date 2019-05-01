@@ -73,7 +73,7 @@ class word2vec(torch.nn.Module):
         
         if self.model_type == "skip-gram":
             batches = np.vstack((np.array(target), np.array(context))).T
-        else:
+        elif self.model_type == "cbow":
             batches = []
             for c, t in zip(context, target):
                 batches.append([c, t])
@@ -86,36 +86,68 @@ class word2vec(torch.nn.Module):
         return negative_samples    
 
     def forward(self, batch, corpus = None):
-        if self.ns == 0:
-            y_true = Variable(torch.from_numpy(np.array([batch[1]])).long())
-            x1 = torch.LongTensor([batch[0]])
-            x2 = torch.LongTensor(range(self.embedding_dim))
-                
-            u_emb = self.u_embeddings(x1)
-            v_emb = self.v_embeddings(x2)
-            z = torch.matmul(u_emb, v_emb).view(-1)
+        if self.model_type == "skip-gram":
+            if self.ns == 0:
+                y_true = Variable(torch.from_numpy(np.array([batch[1]])).long())
+                x1 = torch.LongTensor([batch[0]])
+                x2 = torch.LongTensor(range(self.embedding_dim))
+                    
+                u_emb = self.u_embeddings(x1)
+                v_emb = self.v_embeddings(x2)
+                z = torch.matmul(u_emb, v_emb).view(-1)
 
-            log_softmax = F.log_softmax(z, dim = 0)
-            loss = F.nll_loss(log_softmax.view(1,-1), y_true)
-        else:        
-            target = torch.LongTensor([[batch[0]]])
-            context = torch.LongTensor([[batch[1]]])
+                log_softmax = F.log_softmax(z, dim = 0)
+                loss = F.nll_loss(log_softmax.view(1,-1), y_true)
+            else:        
+                x1 = torch.LongTensor([[batch[0]]])
+                x2 = torch.LongTensor([[batch[1]]])
 
-            ns = self.negative_sampling(corpus)
-            ns = torch.LongTensor([[ns]])
+                ns = self.negative_sampling(corpus)
+                ns = torch.LongTensor([[ns]])
 
-            #positive
-            x1 = self.u_embeddings(target)
-            x2 = self.v_embeddings(context)
+                #positive
+                u_emb = self.u_embeddings(x1)
+                v_emb = self.v_embeddings(x2)
 
-            score = torch.sum(torch.mul(x1, x2))#inner product
-            log_target = F.logsigmoid(score).squeeze()
+                score = torch.sum(torch.mul(u_emb, v_emb))#inner product
+                log_target = F.logsigmoid(score).squeeze()
 
-            #negative
-            x3 = self.v_embeddings(ns)
-            neg_score = -1 * torch.sum(torch.mul(x1, x3), dim = 2)
-            log_neg_sample = F.logsigmoid(neg_score).squeeze()
+                #negative
+                v_emb_negative = self.v_embeddings(ns)
+                neg_score = -1 * torch.sum(torch.mul(u_emb, v_emb_negative), dim = 2)
+                log_neg_sample = F.logsigmoid(neg_score).squeeze()
 
-            loss = -1 * (log_target + log_neg_sample.sum())
-    
+                loss = -1 * (log_target + log_neg_sample.sum())
+        elif self.model_type == "cbow":
+            if self.ns == 0:
+                y_true = Variable(torch.from_numpy(np.array([batch[1]])).long())
+                x1 = torch.LongTensor(batch[0])
+                x2 = torch.LongTensor(range(self.embedding_dim))
+                    
+                u_emb = torch.mean(self.u_embeddings(x1), dim = 0)
+                v_emb = self.v_embeddings(x2)
+                z = torch.matmul(u_emb, v_emb).view(-1)
+
+                log_softmax = F.log_softmax(z, dim = 0)
+                loss = F.nll_loss(log_softmax.view(1,-1), y_true)
+            else:
+                x1 = torch.LongTensor(batch[0])
+                x2 = torch.LongTensor([batch[1]])
+
+                ns = self.negative_sampling(corpus)
+                ns = torch.LongTensor([ns])
+
+                #positive
+                u_emb = torch.mean(self.u_embeddings(x1), dim = 0)
+                v_emb = self.v_embeddings(x2)
+
+                score = torch.sum(torch.mul(u_emb, v_emb))#inner product
+                log_target = F.logsigmoid(score).squeeze()
+
+                #negative
+                v_emb_negative = self.v_embeddings(ns)
+                neg_score = -1 * torch.sum(torch.mul(u_emb, v_emb_negative), dim = 2)
+                log_neg_sample = F.logsigmoid(neg_score).squeeze()
+
+                loss = -1 * (log_target + log_neg_sample.sum())    
         return loss
