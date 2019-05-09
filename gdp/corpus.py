@@ -106,8 +106,9 @@ class Corpus:
         p = word_counts / word_counts.sum()
         p = np.power(p, 0.75)
         p /= p.sum()
-
-        return self.count[1:, 0], p
+        
+        return list(range(1, len(self.dictionary))), p
+        #return self.count[1:, 0], p
     
     def subsampling(self, count, rho = 1):
         if count == '-1':

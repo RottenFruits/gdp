@@ -19,13 +19,6 @@ class word2vec(torch.nn.Module):
         self.u_embeddings = torch.nn.Embedding(self.vocab_size, self.embedding_dim, sparse = True)
         self.v_embeddings = torch.nn.Embedding(self.vocab_size, self.embedding_dim, sparse = True)
 
-        #if ns == 0:
-        #    self.u_embeddings = torch.nn.Embedding(self.vocab_size+1, self.embedding_dim,  sparse = True)
-        #    self.v_embeddings = torch.nn.Embedding(self.embedding_dim, self.vocab_size+1, sparse = True) 
-        #else:
-        #    self.u_embeddings = torch.nn.Embedding(self.vocab_size+1, self.embedding_dim, sparse = True)
-        #    self.v_embeddings = torch.nn.Embedding(self.vocab_size+1, self.embedding_dim, sparse = True)
-
         #embedding init
         initrange = 0.5 / self.embedding_dim
         self.u_embeddings.weight.data.uniform_(-initrange, initrange)
@@ -60,7 +53,8 @@ class word2vec(torch.nn.Module):
                 context.append([data[x] for i, x in enumerate(range(start_idx, end_idx)) if x != col_idx])
                 target.append(target_)
                 i += 1
-                
+
+            
             col_idx = (col_idx + 1)
             if col_idx == len(data):
                 col_idx  = 0
@@ -76,39 +70,27 @@ class word2vec(torch.nn.Module):
         return batches
 
     def negative_sampling(self, corpus):
-        sampled = np.random.choice(corpus.negaive_sample_table_w, p = corpus.negaive_sample_table_p, size = self.negative_samples)
-        negative_samples = np.array([corpus.dictionary[w] for w in sampled])
+        negative_samples = np.random.choice(corpus.negaive_sample_table_w, p = corpus.negaive_sample_table_p, size = self.negative_samples)
         return negative_samples    
 
     def forward(self, batch, corpus = None):
         if self.model_type == "skip-gram":
-            if self.ns == 0:
-                y_true = batch[1]
-                x1 = batch[0]
-                x2 = torch.LongTensor(range(self.vocab_size))
-                    
-                u_emb = self.u_embeddings(x1)
-                v_emb = self.v_embeddings(x2)
+            if self.ns == 0:                    
+                u_emb = self.u_embeddings(batch[0])
+                v_emb = self.v_embeddings(torch.LongTensor(range(self.vocab_size)))
                 z = torch.matmul(u_emb, torch.t(v_emb))
-                
                 log_softmax = F.log_softmax(z, dim = 1)
-                loss = F.nll_loss(log_softmax, y_true)
-
-            else:        
-                x1 = batch[0]
-                x2 = batch[1]
-                ns = batch[2]
-
+                loss = F.nll_loss(log_softmax, batch[1])
+            else:
                 #positive
-                u_emb = self.u_embeddings(x1)
-                v_emb = self.v_embeddings(x2)
-
+                u_emb = self.u_embeddings(batch[0])
+                v_emb = self.v_embeddings(batch[1])
                 score = torch.sum(torch.mul(u_emb, v_emb), dim = 1)#inner product
                 log_target = F.logsigmoid(score)
 
                 #negative
-                v_emb_negative = self.v_embeddings(ns)
-                neg_score = -1 * torch.sum(torch.mul(u_emb.view(x1.shape[0], 1, self.embedding_dim), v_emb_negative.view(x1.shape[0], ns.shape[1], self.embedding_dim)), dim = 2)
+                v_emb_negative = self.v_embeddings(batch[2])
+                neg_score = -1 * torch.sum(torch.mul(u_emb.view(batch[0].shape[0], 1, self.embedding_dim), v_emb_negative.view(batch[0].shape[0], batch[2].shape[1], self.embedding_dim)), dim = 2)
                 log_neg_sample = F.logsigmoid(neg_score)
 
                 loss = -1 * (log_target.sum() + log_neg_sample.sum())
