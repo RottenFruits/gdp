@@ -1,5 +1,6 @@
 import torch
 import torch.optim as optim
+import torch.utils.data
 import collections
 import numpy as np
 from tqdm import tqdm
@@ -24,19 +25,22 @@ class DistributedRepresentation:
         for epo in range(num_epochs):
             loss_val = 0
 
-            while self.model.batch_end  == 0:
-                batches = self.model.generate_batch(self.corpus, self.window_size, self.batch_size)
-                for i in tqdm(range(len(batches)), desc = 'batches', leave = False):
-                    optimizer.zero_grad()
-                    if self.ns == 0:
-                        loss = self.model(batches[i])
-                    else:
-                        loss = self.model(batches[i], self.corpus)
-                    loss.backward()
-                    loss_val += loss.data
-                    optimizer.step()
+            datas = self.model.generate_batch2(self.corpus, self.window_size)
+            x = torch.tensor(datas[:, 0])
+            y = torch.tensor(datas[:, 1])
+            dataset = torch.utils.data.TensorDataset(x, y)
+            batches = torch.utils.data.DataLoader(dataset, batch_size = self.batch_size, shuffle = False)
 
-            self.model.batch_end = 0
+            for batch in batches:
+                optimizer.zero_grad()
+                if self.ns == 0:
+                    loss = self.model(batch)
+                else:
+                    loss = self.model(batch, self.corpus)
+                loss.backward()
+                loss_val += loss.data
+                optimizer.step()
+
             #shuffle
             rind = np.random.permutation(len(self.corpus.data))
             self.corpus.data = np.array(self.corpus.data)[rind]
