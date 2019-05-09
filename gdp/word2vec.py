@@ -111,7 +111,7 @@ class word2vec(torch.nn.Module):
                 neg_score = -1 * torch.sum(torch.mul(u_emb.view(x1.shape[0], 1, self.embedding_dim), v_emb_negative.view(x1.shape[0], ns.shape[1], self.embedding_dim)), dim = 2)
                 log_neg_sample = F.logsigmoid(neg_score)
 
-                loss = (-1 * (log_target + log_neg_sample.sum()))[0]
+                loss = -1 * (log_target.sum() + log_neg_sample.sum())
         elif self.model_type == "cbow":
             if self.ns == 0:
                 y_true = Variable(torch.from_numpy(np.array([batch[1]])).long())
