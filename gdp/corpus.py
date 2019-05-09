@@ -108,7 +108,6 @@ class Corpus:
         p /= p.sum()
         
         return list(range(1, len(self.dictionary))), p
-        #return self.count[1:, 0], p
     
     def subsampling(self, count, rho = 1):
         if count == '-1':
