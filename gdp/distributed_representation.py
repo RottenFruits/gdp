@@ -26,7 +26,8 @@ class DistributedRepresentation:
         datas = self.model.generate_batch(self.corpus, self.window_size)
         x = torch.LongTensor(datas[:, 0])
         y = torch.LongTensor(datas[:, 1])
-        ns = torch.LongTensor(np.array([self.model.negative_sampling(self.corpus) for i in range(len(datas))]))
+        if self.ns == 1:
+            ns = torch.LongTensor(np.array([self.model.negative_sampling(self.corpus) for i in range(len(datas))]))
 
         for epo in range(num_epochs):
             loss_val = 0
