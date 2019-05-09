@@ -25,18 +25,20 @@ class DistributedRepresentation:
         for epo in range(num_epochs):
             loss_val = 0
 
-            datas = self.model.generate_batch2(self.corpus, self.window_size)
-            x = torch.tensor(datas[:, 0])
-            y = torch.tensor(datas[:, 1])
-            dataset = torch.utils.data.TensorDataset(x, y)
+            datas = self.model.generate_batch(self.corpus, self.window_size)
+            x = torch.LongTensor(datas[:, 0])
+            y = torch.LongTensor(datas[:, 1])
+            if self.ns == 0:
+                dataset = torch.utils.data.TensorDataset(x, y)
+            else:
+                ns = torch.LongTensor(np.array([self.model.negative_sampling(self.corpus) for i in range(len(datas))]))
+                dataset = torch.utils.data.TensorDataset(x, y, ns)
+
             batches = torch.utils.data.DataLoader(dataset, batch_size = self.batch_size, shuffle = False)
 
             for batch in batches:
                 optimizer.zero_grad()
-                if self.ns == 0:
-                    loss = self.model(batch)
-                else:
-                    loss = self.model(batch, self.corpus)
+                loss = self.model(batch)
                 loss.backward()
                 loss_val += loss.data
                 optimizer.step()
