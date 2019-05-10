@@ -18,6 +18,9 @@ class word2vec(torch.nn.Module):
         
         self.u_embeddings = torch.nn.Embedding(self.vocab_size, self.embedding_dim, sparse = True)
         self.v_embeddings = torch.nn.Embedding(self.vocab_size, self.embedding_dim, sparse = True)
+        if torch.cuda.is_available():
+            self.u_embeddings = self.u_embeddings.cuda()
+            self.v_embeddings = self.v_embeddings.cuda()
 
         #embedding init
         initrange = 0.5 / self.embedding_dim
