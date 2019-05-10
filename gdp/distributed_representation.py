@@ -52,7 +52,13 @@ class DistributedRepresentation:
     def get_vector(self, word):
         word_idx = self.corpus.dictionary[word]
         word_idx = torch.LongTensor([[word_idx]])
-        vector = self.model.u_embeddings(word_idx).view(-1).detach().numpy()
+        if torch.cuda.is_available():
+            word_idx = word_idx.cuda()
+            vector = self.model.u_embeddings(word_idx).view(-1).detach().cpu().numpy()
+        else:
+            vector = self.model.u_embeddings(word_idx).view(-1).detach().numpy()
+
+        #vector = self.model.u_embeddings(word_idx).view(-1).detach().numpy()
         return vector
 
     def similarity_pair(self, word1, word2):
