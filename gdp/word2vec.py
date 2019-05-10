@@ -50,8 +50,10 @@ class word2vec(torch.nn.Module):
                     target.append(target_)
                     i += 1
             else:
-                context.append([data[x] for i, x in enumerate(range(start_idx, end_idx)) if x != col_idx])
-                target.append(target_)
+                c = [data[x] for i, x in enumerate(range(start_idx, end_idx)) if x != col_idx]
+                if len(c) == (window_size * 2):
+                    context.append(c)
+                    target.append(target_)
                 i += 1
 
             
@@ -61,16 +63,16 @@ class word2vec(torch.nn.Module):
                 row_idx = row_idx + 1
                     
         if self.model_type == "skip-gram":
-            batches = np.vstack((np.array(target), np.array(context))).T
+            x = np.array(target)
+            y = np.array(context)
         elif self.model_type == "cbow":
-            batches = []
-            for c, t in zip(context, target):
-                batches.append([c, t])
-            batches = np.array(batches)
-        return batches
+            x = np.array(context)
+            y = np.array(target)
+        return x, y
 
     def negative_sampling(self, corpus):
-        negative_samples = np.random.choice(corpus.negaive_sample_table_w, p = corpus.negaive_sample_table_p, size = self.negative_samples)
+        negative_samples = np.random.randint(low = 1, high = self.vocab_size, size = self.negative_samples)
+        #negative_samples = np.random.choice(corpus.negaive_sample_table_w, p = corpus.negaive_sample_table_p, size = self.negative_samples)
         return negative_samples    
 
     def forward(self, batch, corpus = None):
@@ -96,34 +98,24 @@ class word2vec(torch.nn.Module):
                 loss = -1 * (log_target.sum() + log_neg_sample.sum())
         elif self.model_type == "cbow":
             if self.ns == 0:
-                y_true = Variable(torch.from_numpy(np.array([batch[1]])).long())
-                x1 = torch.LongTensor(batch[0])
-                x2 = torch.LongTensor(range(self.embedding_dim))
-                    
-                u_emb = torch.mean(self.u_embeddings(x1), dim = 0)
-                v_emb = self.v_embeddings(x2)
-                z = torch.matmul(u_emb, v_emb).view(-1)
+                u_emb = torch.mean(self.u_embeddings(batch[0]), dim = 1)
+                v_emb = self.v_embeddings(torch.LongTensor(range(self.vocab_size)))
+                z = torch.matmul(u_emb, torch.t(v_emb))
 
-                log_softmax = F.log_softmax(z, dim = 0)
-                loss = F.nll_loss(log_softmax.view(1,-1), y_true)
+                log_softmax = F.log_softmax(z, dim = 1)
+                loss = F.nll_loss(log_softmax, batch[1])
             else:
-                x1 = torch.LongTensor(batch[0])
-                x2 = torch.LongTensor([batch[1]])
-
-                ns = self.negative_sampling(corpus)
-                ns = torch.LongTensor([ns])
-
                 #positive
-                u_emb = torch.mean(self.u_embeddings(x1), dim = 0)
-                v_emb = self.v_embeddings(x2)
+                u_emb = torch.mean(self.u_embeddings(batch[0]), dim = 1)
+                v_emb = self.v_embeddings(batch[1])
 
-                score = torch.sum(torch.mul(u_emb, v_emb))#inner product
-                log_target = F.logsigmoid(score).squeeze()
+                score = torch.sum(torch.mul(u_emb, v_emb), dim = 1)#inner product
+                log_target = F.logsigmoid(score)
 
                 #negative
-                v_emb_negative = self.v_embeddings(ns)
-                neg_score = -1 * torch.sum(torch.mul(u_emb, v_emb_negative), dim = 2)
-                log_neg_sample = F.logsigmoid(neg_score).squeeze()
+                v_emb_negative = self.v_embeddings(batch[2])
+                neg_score = -1 * torch.sum(torch.mul(u_emb.view(batch[0].shape[0], 1, self.embedding_dim), v_emb_negative.view(batch[0].shape[0], batch[2].shape[1], self.embedding_dim)), dim = 2)
+                log_neg_sample = F.logsigmoid(neg_score)
 
-                loss = -1 * (log_target + log_neg_sample.sum())    
+                loss = -1 * (log_target.sum() + log_neg_sample.sum())
         return loss
