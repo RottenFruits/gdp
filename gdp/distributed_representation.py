@@ -1,5 +1,6 @@
 import torch
 import torch.optim as optim
+import torch.utils.data
 import collections
 import numpy as np
 from tqdm import tqdm
@@ -21,25 +22,28 @@ class DistributedRepresentation:
         
     def train(self, num_epochs = 100, learning_rate = 0.001):
         optimizer = optim.SGD(self.model.parameters(), lr = learning_rate)
+        
+        x, y = self.model.generate_batch(self.corpus, self.window_size)
+        x = torch.LongTensor(x)
+        y = torch.LongTensor(y)
+        if self.ns == 1:
+            ns = torch.LongTensor(np.array([self.model.negative_sampling(self.corpus) for i in range(len(x))]))
+
         for epo in range(num_epochs):
             loss_val = 0
+            if self.ns == 0:
+                dataset = torch.utils.data.TensorDataset(x, y)
+            else:
+                dataset = torch.utils.data.TensorDataset(x, y, ns)
 
-            while self.model.batch_end  == 0:
-                batches = self.model.generate_batch(self.corpus, self.window_size, self.batch_size)
-                for i in tqdm(range(len(batches)), desc = 'batches', leave = False):
-                    optimizer.zero_grad()
-                    if self.ns == 0:
-                        loss = self.model(batches[i])
-                    else:
-                        loss = self.model(batches[i], self.corpus)
-                    loss.backward()
-                    loss_val += loss.data
-                    optimizer.step()
+            batches = torch.utils.data.DataLoader(dataset, batch_size = self.batch_size, shuffle = True)
 
-            self.model.batch_end = 0
-            #shuffle
-            rind = np.random.permutation(len(self.corpus.data))
-            self.corpus.data = np.array(self.corpus.data)[rind]
+            for batch in batches:
+                optimizer.zero_grad()
+                loss = self.model(batch)
+                loss.backward()
+                loss_val += loss.data
+                optimizer.step()
                         
             if self.trace == True:
                 if epo % 10 == 0:
