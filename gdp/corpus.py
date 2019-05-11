@@ -3,6 +3,8 @@ import numpy as np
 
 class Corpus:
     def __init__(self, data, mode, max_vocabulary_size = 5000, max_line = 0, minimum_freq = 0, tokenize = True, sub = 0):
+        self.sub = sub
+        
         if mode == "l":
             self.corpus = self.read_text_line(data)
             if max_line != 0: self.corpus = self.corpus[0:max_line]
@@ -22,7 +24,7 @@ class Corpus:
             
         self.vocab_size = len(self.dictionary) - 1
         self.negaive_sample_table_w, self.negaive_sample_table_p = self.create_negative_sample_table()
-        self.sub = sub
+        
  
     def read_text(self, file):
         data = []
