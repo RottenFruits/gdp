@@ -2,7 +2,7 @@ import collections
 import numpy as np
 
 class Corpus:
-    def __init__(self, data, mode, max_vocabulary_size =5000, max_line = 0, minimum_freq = 0, tokenize = True):
+    def __init__(self, data, mode, max_vocabulary_size = 5000, max_line = 0, minimum_freq = 0, tokenize = True, sub = 0):
         if mode == "l":
             self.corpus = self.read_text_line(data)
             if max_line != 0: self.corpus = self.corpus[0:max_line]
@@ -22,6 +22,7 @@ class Corpus:
             
         self.vocab_size = len(self.dictionary) - 1
         self.negaive_sample_table_w, self.negaive_sample_table_p = self.create_negative_sample_table()
+        self.sub = sub
  
     def read_text(self, file):
         data = []
@@ -45,7 +46,8 @@ class Corpus:
         count = count[(count[:, 1].astype(int) >= minimum_freq) | (count[:, 1].astype(int) == -1)]
         count = count[count[:, 1].astype(int) >= minimum_freq]
         rho = int(np.percentile(count[1:, 1].astype(int), q = 0.90))
-        count = count[[self.subsampling(c, rho)[0] == 0 for _, c in count]]
+        if self.sub == 1:
+            count = count[[self.subsampling(c, rho)[0] == 0 for _, c in count]]
 
         dictionary = dict()
         for word, _ in count:
@@ -71,7 +73,8 @@ class Corpus:
         count = np.array(count)
         count = count[(count[:, 1].astype(int) >= minimum_freq) | (count[:, 1].astype(int) == -1)]
         rho = int(np.percentile(count[1:, 1].astype(int), q = 0.90))
-        count = count[[self.subsampling(c, rho)[0] == 0 for _, c in count]]
+        if self.sub == 1:
+            count = count[[self.subsampling(c, rho)[0] == 0 for _, c in count]]
 
         #dictionary
         dictionary = dict()
